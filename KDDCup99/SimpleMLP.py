@@ -4,7 +4,7 @@ import pickle
 import warnings
 from datetime import datetime
 
-import avalanche
+# import avalanche
 import numpy as np
 import pandas as pd
 import torch
@@ -23,7 +23,8 @@ from avalanche.evaluation.metrics import (
 from avalanche.logging import InteractiveLogger, TensorboardLogger, TextLogger
 from avalanche.models import SimpleMLP
 from avalanche.training.plugins import EvaluationPlugin
-from avalanche.training.strategies import GEM
+# from avalanche.training.strategies import GEM
+from avalanche.training.supervised import GEM
 from sklearn.manifold import TSNE
 from sklearn.model_selection import StratifiedShuffleSplit, train_test_split
 from torch.nn import CrossEntropyLoss
@@ -213,9 +214,9 @@ eval_plugin = EvaluationPlugin(
     timing_metrics(epoch=True, epoch_running=True),
     ExperienceForgetting(),
     cpu_usage_metrics(experience=True),
-    StreamConfusionMatrix(num_classes=2, save_image=False),
+    # StreamConfusionMatrix(num_classes=2, save_image=False),
     disk_usage_metrics(minibatch=True, epoch=True, experience=True, stream=True),
-    loggers=[interactive_logger, text_logger, tb_logger],
+    loggers=[interactive_logger, text_logger],
 )
 
 cl_strategy = GEM(

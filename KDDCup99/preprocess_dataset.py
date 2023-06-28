@@ -78,10 +78,10 @@ kdd = pd.read_csv("./data/kddcup.data",names=cols)
 # 'warezmaster': 'r2l',
 #     }
 
-kdd.head(5)
+# kdd.head(5)
 
-kdd_std=kdd.std()
-kdd_std=kdd_std.sort_values(ascending=True)
+# kdd_std=kdd.std()
+# kdd_std=kdd_std.sort_values(ascending=True)
 
 kdd.drop(["service","is_host_login","num_outbound_cmds"],axis=1,inplace=True)
 
