@@ -87,10 +87,11 @@ else:
         temp = y_train[y_train.iloc[:, -1] == i]
 
         # Class label 11 = Normal class
-        if i == 11:
-            temp.iloc[:, -1] = 0
-        else:
-            temp.iloc[:, -1] = 1
+        temp.iloc[:, -1] = i
+        # if i == 11:
+        #     temp.iloc[:, -1] = 0
+        # else:
+        #     temp.iloc[:, -1] = 1
         train_label_dict["cat" + str(i)] = temp
 
     for i in range(y_test.iloc[:, -1].nunique()):
@@ -98,10 +99,11 @@ else:
 
         temp = y_test[y_test.iloc[:, -1] == i]
 
-        if i == 11:
-            temp.iloc[:, -1] = 0
-        else:
-            temp.iloc[:, -1] = 1
+        temp.iloc[:, -1] = i
+        # if i == 11:
+        #     temp.iloc[:, -1] = 0
+        # else:
+        #     temp.iloc[:, -1] = 1
         test_label_dict["cat" + str(i)] = temp
 
     train_data_x = list(torch.Tensor(
@@ -174,7 +176,7 @@ def task_ordering(perm):
 
 # MODEL CREATION
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-model = SimpleMLP(num_classes=2, input_size=38, hidden_size=100)
+model = SimpleMLP(num_classes=23, input_size=38, hidden_size=100)
 model.to(device)
 
 perm = {
@@ -225,7 +227,7 @@ cl_strategy = GEM(
     patterns_per_exp=1470,
     criterion=CrossEntropyLoss(),
     train_mb_size=128,
-    train_epochs=50,
+    train_epochs=25,
     eval_mb_size=128,
     evaluator=eval_plugin,
     device=device,
