@@ -47,34 +47,40 @@ train_data_y = []
 test_data_x = []
 test_data_y = []
 
-cache_label = "./data/train_data_x.pth"
+cache_label = "./data/train+_data_x.pth"
 # Normal = 0
 # Attack = 1
 if os.path.exists(cache_label):
 
-    with open("./data/train_data_x.pth", "rb") as f:
+    with open("./data/train+_data_x.pth", "rb") as f:
         train_data_x = pickle.load(f)
-    with open("./data/train_data_y.pth", "rb") as f:
+    with open("./data/train+_data_y.pth", "rb") as f:
         train_data_y = pickle.load(f)
 
-    with open("./data/test_data_x.pth", "rb") as f:
+    with open("./data/test+_data_x.pth", "rb") as f:
         test_data_x = pickle.load(f)
 
-    with open("./data/test_data_y.pth", "rb") as f:
+    with open("./data/test+_data_y.pth", "rb") as f:
         test_data_y = pickle.load(f)
     print("Data Loaded!!!")
 
 else:
-    with open("./data/kdd_df.pth", "rb") as f:
+    with open("./data/KDDTrain+.pth", "rb") as f:
         df = pickle.load(f)
+    with open("./data/KDDTest+.pth", "rb") as f:
+        df_test = pickle.load(f)
 
-    y = df.pop(df.columns[-1]).to_frame()
+    y_train = df.pop(df.columns[-1]).to_frame()
 
-    X = df
+    X_train = df
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, stratify=y, test_size=0.33
-    )
+    y_test = df_test.pop(df_test.columns[-1]).to_frame()
+    
+    X_test = df_test
+    
+    # X_train, X_test, y_train, y_test = train_test_split(
+    #     X, y, stratify=y, test_size=0.33
+    # )
 
     train_dict = {}
     train_label_dict = {}
@@ -86,7 +92,7 @@ else:
 
         temp = y_train[y_train.iloc[:, -1] == i]
 
-        # Class label 11 = Normal class
+        # Class label 11 = Normal class in train dataset
         if i == 11:
             temp.iloc[:, -1] = 0
         else:
@@ -98,7 +104,8 @@ else:
 
         temp = y_test[y_test.iloc[:, -1] == i]
 
-        if i == 11:
+        # Class label 11 = Normal class in test dataset
+        if i == 16:
             temp.iloc[:, -1] = 0
         else:
             temp.iloc[:, -1] = 1
@@ -131,7 +138,7 @@ else:
     print("Dumped into ./data/")
 
 
-def task_ordering(perm):
+def task_ordering(perm_train, perm_test):
     """Divides Data into tasks based on the given permutation order
 
     Parameters
@@ -149,20 +156,31 @@ def task_ordering(perm):
     final_test_data_x = []
     final_test_data_y = []
 
-    for key, values in perm.items():
+    for key, values in perm_train.items():
         temp_train_data_x = torch.Tensor([])
         temp_train_data_y = torch.Tensor([])
-        temp_test_data_x = torch.Tensor([])
-        temp_test_data_y = torch.Tensor([])
+        # temp_test_data_x = torch.Tensor([])
+        # temp_test_data_y = torch.Tensor([])
 
         for value in values:
             temp_train_data_x = torch.cat([temp_train_data_x, train_data_x[value]])
             temp_train_data_y = torch.cat([temp_train_data_y, train_data_y[value]])
-            temp_test_data_x = torch.cat([temp_test_data_x, test_data_x[value]])
-            temp_test_data_y = torch.cat([temp_test_data_y, test_data_y[value]])
+            # temp_test_data_x = torch.cat([temp_test_data_x, test_data_x[value]])
+            # temp_test_data_y = torch.cat([temp_test_data_y, test_data_y[value]])
 
         final_train_data_x.append(temp_train_data_x)
         final_train_data_y.append(temp_train_data_y)
+        # final_test_data_x.append(temp_test_data_x)
+        # final_test_data_y.append(temp_test_data_y)
+    
+    for key, values in perm_test.items():
+        temp_test_data_x = torch.Tensor([])
+        temp_test_data_y = torch.Tensor([])
+
+        for value in values:
+            temp_test_data_x = torch.cat([temp_test_data_x, test_data_x[value]])
+            temp_test_data_y = torch.cat([temp_test_data_y, test_data_y[value]])
+
         final_test_data_x.append(temp_test_data_x)
         final_test_data_y.append(temp_test_data_y)
 
@@ -177,7 +195,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 model = SimpleMLP(num_classes=2, input_size=38, hidden_size=100)
 model.to(device)
 
-perm = {
+perm_train = {
     "1": [13, 22, 20, 14, 6],
     "2": [9, 10, 0, 1, 2],
     "3": [11, 15, 17, 21],
@@ -185,9 +203,17 @@ perm = {
     "5": [3, 4, 5, 16],
 }
 
-task_order_list = [perm]
+perm_test = {
+    "1": [13, 22, 20, 14, 6, 23, 28, 33],
+    "2": [9, 10, 0, 1, 2, 24, 29, 34],
+    "3": [11, 15, 17, 21, 25, 30, 35],
+    "4": [18, 19, 7, 8, 12, 26, 31, 36],
+    "5": [3, 4, 5, 16, 27, 32, 37],
+}
 
-dataset = task_ordering(task_order_list[0])
+task_order_list = [perm_train]
+
+dataset = task_ordering(perm_train, perm_test)
 
 generic_scenario = tensor_scenario(
     train_data_x=dataset[0],
@@ -215,7 +241,7 @@ eval_plugin = EvaluationPlugin(
     ExperienceForgetting(),
     cpu_usage_metrics(experience=True),
     # StreamConfusionMatrix(num_classes=2, save_image=False),
-    disk_usage_metrics(minibatch=True, epoch=True, experience=True, stream=True),
+    disk_usage_metrics(minibatch=True , epoch=True, experience=True, stream=True),
     loggers=[interactive_logger, text_logger],
 )
 
@@ -225,7 +251,7 @@ cl_strategy = GEM(
     patterns_per_exp=1470,
     criterion=CrossEntropyLoss(),
     train_mb_size=128,
-    train_epochs=50,
+    train_epochs=25,
     eval_mb_size=128,
     evaluator=eval_plugin,
     device=device,
